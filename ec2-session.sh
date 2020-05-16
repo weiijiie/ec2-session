@@ -5,9 +5,10 @@ usage()
     echo "Usage: ./ec2-session.sh"
     echo "Description: Starts the specified AWS EC2 instance and uses ssh to connect to it. Stops the instance after exiting. Will attempt to use the profile passed in followed by the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY to authenticate. Otherwise, will default to using the default AWS profile found in ~/.aws/credentials "
     echo -e "\nFlags:"
-    echo "  -i | --instance-id,  Instance ID of EC2 instance to be started."
-    echo "  -k | --key,  Path to private key used to SSH into your EC2 instance."
-    echo "  -p | --profile,  AWS CLI profile to use. Optional"
+    echo "  -i | --instance-id,         Instance ID of EC2 instance to be started."
+    echo "  -k | --key,                 Path to private key used to SSH into your EC2 instance."
+    echo "  -u | --user,                User on EC2 instance to SSH into."
+    echo "  -p | --profile,             AWS CLI profile to use. Optional"
 }
 
 spin()
@@ -64,7 +65,9 @@ stop_instance()
 
 instance_id=
 profile=
+user=
 key=
+no_strict_host_key_checking=
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -75,6 +78,10 @@ while [ "$1" != "" ]; do
         -p | --profile )
             shift
             profile=$1
+            ;;
+        -u | --user )
+            shift
+            user=$1
             ;;
         -k | --key )
             shift
@@ -92,7 +99,7 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [[ -z "$instance_id" || -z "$key" ]]; then
+if [[ -z "$instance_id" || -z "$key" || -z "$user" ]]; then
     usage
     exit 1
 fi
@@ -102,5 +109,5 @@ wait_instance_start $instance_id $profile
 sleep 2
 ip=$(get_started_instance_ip $instance_id $profile)
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
-ssh -i $key ubuntu@$ip
+ssh -i $key $user@$ip
 stop_instance $instance_id $profile
