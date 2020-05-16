@@ -9,6 +9,7 @@ usage()
     echo "  -k | --key,                 Path to private key used to SSH into your EC2 instance."
     echo "  -u | --user,                User on EC2 instance to SSH into."
     echo "  -p | --profile,             AWS CLI profile to use. Optional"
+    echo "  --NoStrictHostKeyChecking,  Disables strict host key checking for SSH."
 }
 
 spin()
@@ -87,6 +88,9 @@ while [ "$1" != "" ]; do
             shift
             key=$1
             ;;
+        --NoStrictHostKeyChecking )
+            no_strict_host_key_checking=true
+            ;;
         -h | --help )
             usage
             exit
@@ -109,5 +113,5 @@ wait_instance_start $instance_id $profile
 sleep 2
 ip=$(get_started_instance_ip $instance_id $profile)
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
-ssh -i $key $user@$ip
+ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $key $user@$ip
 stop_instance $instance_id $profile
