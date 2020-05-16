@@ -58,6 +58,18 @@ get_started_instance_ip()
     echo $ip
 }
 
+ssh_into_instance()
+{
+    ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $1 $2@$3
+    if [ $? -eq 255 ]; then
+        echo -ne "\nRetry once? (y): "
+        read retry
+        if [ $retry == "y" ]; then
+            ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $1 $2@$3
+        fi
+    fi
+}
+
 stop_instance()
 {
     echo "Stopping EC2 instance: $1..."
@@ -140,14 +152,17 @@ fi
 
 start_instance $instance_id $profile
 wait_instance_start $instance_id $profile
-sleep 1
 ip=$(get_started_instance_ip $instance_id $profile)
 
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
 sleep 5
-ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $key $user@$ip
+ssh_into_instance $key $user $ip
+
 
 stop_instance $instance_id $profile
 if [[ ! -z $wait_stop ]]; then
     wait_instance_stop $instance_id $profile
 fi
+
+sleep 1
+exit
