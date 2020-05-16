@@ -9,6 +9,7 @@ usage()
     echo "  -k | --key,                 Path to private key used to SSH into your EC2 instance."
     echo "  -u | --user,                User on EC2 instance to SSH into."
     echo "  -p | --profile,             AWS CLI profile to use. Optional"
+    echo "  --wait-stop,                Program will wait for EC2 to stop before exiting if enabled."
     echo "  --NoStrictHostKeyChecking,  Disables strict host key checking for SSH."
 }
 
@@ -26,6 +27,7 @@ spin()
 
 start_instance()
 {
+    echo "Starting EC2 instance: $1..."
     aws ec2 start-instances --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2") > /dev/null
     if [ $? != 0 ]; then
         exit $?
@@ -66,6 +68,18 @@ stop_instance()
     fi
 }
 
+wait_instance_stop()
+{
+    spin "Waiting for EC2 instance: $1 to stop..." & local spinpid=$!
+    aws ec2 wait instance-stopped --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2")
+    if [ $? != 0 ]; then
+        kill "$spinpid"
+        exit $?
+    fi
+    kill "$spinpid"
+    echo -e "\r$1 stopped!                                                             \n"
+}
+
 unexpected_exit()
 {
     echo "Program exited before $next_status. Ensure your EC2 instance is in your desired state."
@@ -77,7 +91,10 @@ profile=
 user=
 key=
 no_strict_host_key_checking=
+wait_stop=
 next_status="starting"
+
+trap unexpected_exit INT TERM
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -96,6 +113,9 @@ while [ "$1" != "" ]; do
         -k | --key )
             shift
             key=$1
+            ;;
+        --wait-stop )
+            wait_stop=true
             ;;
         --NoStrictHostKeyChecking )
             no_strict_host_key_checking=true
@@ -117,11 +137,16 @@ if [[ -z "$instance_id" || -z "$key" || -z "$user" ]]; then
     exit 1
 fi
 
-trap unexpected_exit INT TERM
+
 start_instance $instance_id $profile
 wait_instance_start $instance_id $profile
 sleep 2
 ip=$(get_started_instance_ip $instance_id $profile)
+
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
 ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $key $user@$ip
+
 stop_instance $instance_id $profile
+if [[ ! -z $wait_stop ]]; then
+    wait_instance_stop $instance_id $profile
+fi
