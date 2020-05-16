@@ -82,7 +82,7 @@ wait_instance_stop()
 
 unexpected_exit()
 {
-    echo "Program exited before $next_status. Ensure your EC2 instance is in your desired state."
+    echo -e "\nProgram exited before $next_status. Ensure your EC2 instance is in your desired state."
     exit 1
 }
 
@@ -140,10 +140,11 @@ fi
 
 start_instance $instance_id $profile
 wait_instance_start $instance_id $profile
-sleep 2
+sleep 1
 ip=$(get_started_instance_ip $instance_id $profile)
 
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
+sleep 5
 ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $key $user@$ip
 
 stop_instance $instance_id $profile
