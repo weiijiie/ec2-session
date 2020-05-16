@@ -30,6 +30,7 @@ start_instance()
     if [ $? != 0 ]; then
         exit $?
     fi
+    next_status="starting"
 }
 
 wait_instance_start()
@@ -41,6 +42,7 @@ wait_instance_start()
         exit $?
     fi
     kill "$spinpid"
+    next_status="stopping"
     echo -e "\r$1 started!                                                             \n"
 }
 
@@ -64,11 +66,18 @@ stop_instance()
     fi
 }
 
+unexpected_exit()
+{
+    echo "Program exited before $next_status. Ensure your EC2 instance is in your desired state."
+    exit 1
+}
+
 instance_id=
 profile=
 user=
 key=
 no_strict_host_key_checking=
+next_status="starting"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -108,6 +117,7 @@ if [[ -z "$instance_id" || -z "$key" || -z "$user" ]]; then
     exit 1
 fi
 
+trap unexpected_exit INT TERM
 start_instance $instance_id $profile
 wait_instance_start $instance_id $profile
 sleep 2
