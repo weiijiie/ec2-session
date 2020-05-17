@@ -73,7 +73,6 @@ ssh_into_instance()
 stop_instance()
 {
     echo "Stopping EC2 instance: $1..."
-    sleep 0.5
     aws ec2 stop-instances --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2") > /dev/null
     if [ $? != 0 ]; then
         exit $?
