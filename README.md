@@ -9,7 +9,7 @@ Short shell script that automates the work flow of starting a remote AWS EC2 ins
 ## Example
 
 ```bash
-./ec2-session.sh -i i-xxxxxxxxxxxxxxxxx -k ~/path/to/key.pem -p profile -u ubuntu --wait-stop"
+./ec2-session.sh -i i-xxxxxxxxxxxxxxxxx -k ~/path/to/key.pem -p profile -u ubuntu --wait-stop
 ```
 
 When run, above command will attempt to start EC2 instance `i-xxxxxxxxxxxxxxxxx` using the credentials as defined in the AWS profile `profile`. It will wait for the instance to be started properly before SSHing into the instance using the key pair `~/path/to/key.pem`. Once the SSH session has terminated properly, the script will attempt to stop the EC2 instance, and wait for the instance to stop properly, before terminating.
