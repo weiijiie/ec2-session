@@ -31,10 +31,9 @@ If the program is interrupted, or the terminal is unexpectedly closed without te
 
 | Flag | Description | Required | Default |
 |---|---|---|---|
-| `-i | --instance-id` | Instance ID of EC2 instance to be started | yes | none |
-| `-k | --key` | Path to private key used to SSH into your EC2 instance | yes | none |
-| `-u | --user` | User on EC2 instance to SSH into | yes | none |
-| `-p | --profile` | AWS CLI profile to use. Optional | no | specified above |
+| `-i \| --instance-id` | Instance ID of EC2 instance to be started | yes | none |
+| `-k \| --key` | Path to private key used to SSH into your EC2 instance | yes | none |
+| `-u \| --user` | User on EC2 instance to SSH into | yes | none |
+| `-p \| --profile` | AWS CLI profile to use. Optional | no | specified above |
 | `--wait-stop` | Program will wait for EC2 to stop before exiting if enabled | no | disabled |
 | `--NoStrictHostKeyChecking` | Disables strict host key checking for SSH. | no | disabled |
-
