@@ -18,7 +18,7 @@ When run, above command will attempt to start EC2 instance `i-xxxxxxxxxxxxxxxxx`
 
 2 sets of credentials are required to use the script:
 
-- AWS access key ID and secret access key for an IAM account with minimally these permissions:
+- AWS access key ID and secret access key for an IAM user with minimally these permissions:
   - `[ "ec2:StartInstances", "ec2:StopInstances", "ec2:DescribeInstances" ]`
 
 - Key pair associated with your EC2 instance to use for SSH.
