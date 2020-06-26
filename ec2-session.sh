@@ -163,5 +163,4 @@ if [[ ! -z $wait_stop ]]; then
     wait_instance_stop $instance_id $profile
 fi
 
-sleep 1
 exit

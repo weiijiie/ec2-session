@@ -23,7 +23,7 @@ When run, above command will attempt to start EC2 instance `i-xxxxxxxxxxxxxxxxx`
 
 - Key pair associated with your EC2 instance to use for SSH.
 
-To obtain the AWS access key ID and secret access key to authenticate with AWS APIs, the script will first attempt to use the AWS profile passed in as parameter, followed by taking the values from the environment variables `$AWS_ACCESS_KEY_ID`, `$AWS_SECRET_ACCESS_KEY`. If those are not set, it will default to using the default profile configured in the AWS CLI.
+To obtain the AWS access key ID and secret access key to authenticate with AWS APIs, the script will first attempt to use the AWS profile passed in as parameter, followed by taking the values from the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. If those are not set, it will default to using the default profile configured in the AWS CLI.
 
 If the program is interrupted, or the terminal is unexpectedly closed without terminating properly, the instance **may not stop properly**. Be sure to check the status of your instances in your AWS account if that happens, to avoid being billed additional charges.
 
