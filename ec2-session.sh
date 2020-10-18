@@ -20,7 +20,7 @@ spin()
     sleep 0.5
     while true; do
         printf "\r%.1s $1" "$sp"
-        sp=${sp#?}${sp%???}
+        sp="${sp#?}${sp%???}"
         sleep 1
     done
 }
@@ -28,8 +28,7 @@ spin()
 start_instance()
 {
     echo "Starting EC2 instance: $1..."
-    aws ec2 start-instances --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2") > /dev/null
-    if [ $? != 0 ]; then
+    if ! aws ec2 start-instances --instance-ids "$1"  ${2+--profile ${2}} > /dev/null; then
         exit $?
     fi
     next_status="starting"
@@ -38,34 +37,34 @@ start_instance()
 wait_instance_start()
 {
     spin "Waiting for EC2 instance: $1 to start..." & local spinpid=$!
-    aws ec2 wait instance-running --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2")
-    if [ $? != 0 ]; then
-        kill "$spinpid"
+    if ! aws ec2 wait instance-running --instance-ids "$1"  ${2+--profile ${2}}; then
+        kill "${spinpid}"
         exit $?
     fi
-    kill "$spinpid"
+    kill "${spinpid}"
     next_status="stopping"
     echo -e "\r$1 started!                                                             \n"
 }
 
 get_started_instance_ip()
 {
-    local ip=$(aws ec2 describe-instances --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2") \
-        --query 'Reservations[0].Instances[0].PublicIpAddress' | tr -d '"')
-    if [ $? != 0 ]; then
+    local ip
+    ip="$(aws ec2 describe-instances --instance-ids "$1"  ${2+--profile ${2}} \
+        --query 'Reservations[0].Instances[0].PublicIpAddress' | tr -d '"')"
+    if [[ $? != 0 ]]; then
         exit $?
     fi
-    echo $ip
+    echo "${ip}"
 }
 
 ssh_into_instance()
 {
-    ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $1 $2@$3
-    if [ $? -eq 255 ]; then
+    ssh "$([[ -n "${no_strict_host_key_checking}" ]] && echo "-o StrictHostKeyChecking=no")" -i "$1" "$2@$3"
+    if [[ $? -eq 255 ]]; then
         echo -ne "\nRetry once? (y): "
-        read retry
-        if [ $retry == "y" ]; then
-            ssh $([[ ! -z $no_strict_host_key_checking ]] && echo "-o StrictHostKeyChecking=no") -i $1 $2@$3
+        read -r retry
+        if [[ "${retry}" == "y" ]]; then
+            ssh "$([[ -n ${no_strict_host_key_checking} ]] && echo "-o StrictHostKeyChecking=no")" -i "$1" "$2@$3"
         fi
     fi
 }
@@ -73,8 +72,7 @@ ssh_into_instance()
 stop_instance()
 {
     echo "Stopping EC2 instance: $1..."
-    aws ec2 stop-instances --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2") > /dev/null
-    if [ $? != 0 ]; then
+    if ! aws ec2 stop-instances --instance-ids "$1"  ${2+--profile ${2}} > /dev/null; then
         exit $?
     fi
 }
@@ -82,18 +80,17 @@ stop_instance()
 wait_instance_stop()
 {
     spin "Waiting for EC2 instance: $1 to stop..." & local spinpid=$!
-    aws ec2 wait instance-stopped --instance-ids $1 $([[ ! -z $2 ]] && echo "--profile $2")
-    if [ $? != 0 ]; then
-        kill "$spinpid"
+    if ! aws ec2 wait instance-stopped --instance-ids "$1" ${2+--profile ${2}}; then
+        kill "${spinpid}"
         exit $?
     fi
-    kill "$spinpid"
+    kill "${spinpid}"
     echo -e "\r$1 stopped!                                                             \n"
 }
 
 unexpected_exit()
 {
-    echo -e "\nProgram exited before $next_status. Ensure your EC2 instance is in your desired state."
+    echo -e "\nProgram exited before ${next_status}. Ensure your EC2 instance is in your desired state."
     exit 1
 }
 
@@ -143,24 +140,24 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [[ -z "$instance_id" || -z "$key" || -z "$user" ]]; then
+if [[ -z "${instance_id}" || -z "${key}" || -z "${user}" ]]; then
     usage
     exit 1
 fi
 
 
-start_instance $instance_id $profile
-wait_instance_start $instance_id $profile
-ip=$(get_started_instance_ip $instance_id $profile)
+start_instance "${instance_id}" "${profile}"
+wait_instance_start "${instance_id}" "${profile}"
+ip="$(get_started_instance_ip "${instance_id}" "${profile}")"
 
 echo -e "Please wait for instance to be ready to accept SSH connections...\n"
 sleep 5
-ssh_into_instance $key $user $ip
+ssh_into_instance "${key}" "${user}" "${ip}"
 
 
-stop_instance $instance_id $profile
-if [[ ! -z $wait_stop ]]; then
-    wait_instance_stop $instance_id $profile
+stop_instance "${instance_id}" "${profile}"
+if [[ -n "${wait_stop}" ]]; then
+    wait_instance_stop "${instance_id}" "${profile}"
 fi
 
 exit
